@@ -1,0 +1,76 @@
+﻿<Window x:Class="ActiveTWpf.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ActiveTWpf"
+        xmlns:viewModels="clr-namespace:ActiveTWpf.ViewModels"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="800">
+    <Grid>
+        <TabControl>
+            <TabItem Header="Symbols" DataContext="{Binding ActiveViewModel}">
+                <ItemsControl ItemsSource="{Binding Symbols}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type viewModels:SymbolViewModel}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition />
+                                    <ColumnDefinition />
+                                    <ColumnDefinition />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="{Binding Id}" />
+                                <TextBlock Grid.Column="1" Text="{Binding Bid}" />
+                                <TextBlock Grid.Column="2" Text="{Binding Ask}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </TabItem>
+            <TabItem Header="Orders" DataContext="{Binding ActiveViewModel}">
+                <ItemsControl ItemsSource="{Binding Orders}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type viewModels:OrderViewModel}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition />
+                                    <ColumnDefinition />
+                                    <ColumnDefinition />
+                                    <ColumnDefinition />
+                                    <ColumnDefinition />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="{Binding Symbol}" />
+                                <TextBlock Grid.Column="1" Text="{Binding OpenPrice, StringFormat={}{0:0.00}}" />
+                                <TextBlock Grid.Column="2" Text="{Binding Profit, StringFormat={}{0:0.00}}" />
+                                <TextBlock Grid.Column="3" Text="{Binding Lots}" />
+                                <Button Grid.Column="4" Content="Close" Command="{Binding PartialCloseCommand}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </TabItem>
+            <TabItem Header="Position" DataContext="{Binding ActiveViewModel}">
+                <ItemsControl ItemsSource="{Binding Positions}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type viewModels:OrderViewModel}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition />
+                                    <ColumnDefinition />
+                                    <ColumnDefinition />
+                                    <ColumnDefinition />
+                                    <ColumnDefinition />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="{Binding Symbol}" />
+                                <TextBlock Grid.Column="1" Text="{Binding OpenPrice, StringFormat={}{0:0.00}}" />
+                                <TextBlock Grid.Column="2" Text="{Binding StopLoss, StringFormat={}{0:0.00}}" />
+                                <TextBlock Grid.Column="3" Text="{Binding TakeProfit, StringFormat={}{0:0.00}}" />
+                                <Button Grid.Column="4" Content="Cancel" Command="{Binding CancelCommand}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>

@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ATPlatform.Common\ATPlatform.Common.csproj" />
+    <ProjectReference Include="..\ATPlatform.Messages\ATPlatform.Messages.csproj" />
+    <ProjectReference Include="..\ATPlatform.Model.Contracts\ATPlatform.Model.Contracts.csproj" />
+    <ProjectReference Include="..\ATPlatform.Model.Proto\ATPlatform.Model.Proto.csproj" />
+    <ProjectReference Include="..\ATPlatform.Model\ATPlatform.Model.csproj" />
+    <ProjectReference Include="..\Lightstreamer.DotNet.Client\Lightstreamer.DotNet.Client.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,208 @@
+﻿// Decompiled with JetBrains decompiler
+// Type: ATPlatform.IDL.AddOffset1MinBarsRequestProto
+// Assembly: ATPlatform.Messages, Version=3.20.0.0, Culture=neutral, PublicKeyToken=5c835f9b5b0ff0ca
+// MVID: 6651AE18-E9AC-4965-9D78-DF9CC6E22F42
+// Assembly location: C:\Users\c.esneault\source\repos\TestA2\TestA2\bin\Debug\ATPlatform.Messages.dll
+
+using Google.Protobuf;
+using Google.Protobuf.Reflection;
+using System;
+using System.Diagnostics;
+
+namespace ATPlatform.IDL
+{
+  public sealed class AddOffset1MinBarsRequestProto : 
+    IMessage<AddOffset1MinBarsRequestProto>,
+    IMessage,
+    IEquatable<AddOffset1MinBarsRequestProto>,
+    IDeepCloneable<AddOffset1MinBarsRequestProto>
+  {
+    private static readonly MessageParser<AddOffset1MinBarsRequestProto> _parser = new MessageParser<AddOffset1MinBarsRequestProto>((Func<AddOffset1MinBarsRequestProto>) (() => new AddOffset1MinBarsRequestProto()));
+    private UnknownFieldSet _unknownFields;
+    public const int SymbolIdFieldNumber = 1;
+    private string symbolId_ = "";
+    public const int DateFromFieldNumber = 2;
+    private long dateFrom_;
+    public const int DateToFieldNumber = 3;
+    private long dateTo_;
+    public const int OffsetFieldNumber = 4;
+    private int offset_;
+
+    [DebuggerNonUserCode]
+    public static MessageParser<AddOffset1MinBarsRequestProto> Parser => AddOffset1MinBarsRequestProto._parser;
+
+    [DebuggerNonUserCode]
+    public static MessageDescriptor Descriptor => ATPlatformMessagesReflection.Descriptor.MessageTypes[152];
+
+    [DebuggerNonUserCode]
+    MessageDescriptor IMessage.Descriptor => AddOffset1MinBarsRequestProto.Descriptor;
+
+    [DebuggerNonUserCode]
+    public AddOffset1MinBarsRequestProto()
+    {
+    }
+
+    [DebuggerNonUserCode]
+    public AddOffset1MinBarsRequestProto(AddOffset1MinBarsRequestProto other)
+      : this()
+    {
+      this.symbolId_ = other.symbolId_;
+      this.dateFrom_ = other.dateFrom_;
+      this.dateTo_ = other.dateTo_;
+      this.offset_ = other.offset_;
+      this._unknownFields = UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [DebuggerNonUserCode]
+    public AddOffset1MinBarsRequestProto Clone() => new AddOffset1MinBarsRequestProto(this);
+
+    [DebuggerNonUserCode]
+    public string SymbolId
+    {
+      get => this.symbolId_;
+      set => this.symbolId_ = ProtoPreconditions.CheckNotNull<string>(value, nameof (value));
+    }
+
+    [DebuggerNonUserCode]
+    public long DateFrom
+    {
+      get => this.dateFrom_;
+      set => this.dateFrom_ = value;
+    }
+
+    [DebuggerNonUserCode]
+    public long DateTo
+    {
+      get => this.dateTo_;
+      set => this.dateTo_ = value;
+    }
+
+    [DebuggerNonUserCode]
+    public int Offset
+    {
+      get => this.offset_;
+      set => this.offset_ = value;
+    }
+
+    [DebuggerNonUserCode]
+    public override bool Equals(object other) => this.Equals(other as AddOffset1MinBarsRequestProto);
+
+    [DebuggerNonUserCode]
+    public bool Equals(AddOffset1MinBarsRequestProto other)
+    {
+      if (other == null)
+        return false;
+      if (other == this)
+        return true;
+      return !(this.SymbolId != other.SymbolId) && this.DateFrom == other.DateFrom && (this.DateTo == other.DateTo && this.Offset == other.Offset) && object.Equals((object) this._unknownFields, (object) other._unknownFields);
+    }
+
+    [DebuggerNonUserCode]
+    public override int GetHashCode()
+    {
+      int num = 1;
+      if (this.SymbolId.Length != 0)
+        num ^= this.SymbolId.GetHashCode();
+      if (this.DateFrom != 0L)
+        num ^= this.DateFrom.GetHashCode();
+      if (this.DateTo != 0L)
+        num ^= this.DateTo.GetHashCode();
+      if (this.Offset != 0)
+        num ^= this.Offset.GetHashCode();
+      if (this._unknownFields != null)
+        num ^= this._unknownFields.GetHashCode();
+      return num;
+    }
+
+    [DebuggerNonUserCode]
+    public override string ToString() => JsonFormatter.ToDiagnosticString((IMessage) this);
+
+    [DebuggerNonUserCode]
+    public void WriteTo(CodedOutputStream output)
+    {
+      if (this.SymbolId.Length != 0)
+      {
+        output.WriteRawTag((byte) 10);
+        output.WriteString(this.SymbolId);
+      }
+      if (this.DateFrom != 0L)
+      {
+        output.WriteRawTag((byte) 16);
+        output.WriteInt64(this.DateFrom);
+      }
+      if (this.DateTo != 0L)
+      {
+        output.WriteRawTag((byte) 24);
+        output.WriteInt64(this.DateTo);
+      }
+      if (this.Offset != 0)
+      {
+        output.WriteRawTag((byte) 32);
+        output.WriteInt32(this.Offset);
+      }
+      if (this._unknownFields == null)
+        return;
+      this._unknownFields.WriteTo(output);
+    }
+
+    [DebuggerNonUserCode]
+    public int CalculateSize()
+    {
+      int num = 0;
+      if (this.SymbolId.Length != 0)
+        num += 1 + CodedOutputStream.ComputeStringSize(this.SymbolId);
+      if (this.DateFrom != 0L)
+        num += 1 + CodedOutputStream.ComputeInt64Size(this.DateFrom);
+      if (this.DateTo != 0L)
+        num += 1 + CodedOutputStream.ComputeInt64Size(this.DateTo);
+      if (this.Offset != 0)
+        num += 1 + CodedOutputStream.ComputeInt32Size(this.Offset);
+      if (this._unknownFields != null)
+        num += this._unknownFields.CalculateSize();
+      return num;
+    }
+
+    [DebuggerNonUserCode]
+    public void MergeFrom(AddOffset1MinBarsRequestProto other)
+    {
+      if (other == null)
+        return;
+      if (other.SymbolId.Length != 0)
+        this.SymbolId = other.SymbolId;
+      if (other.DateFrom != 0L)
+        this.DateFrom = other.DateFrom;
+      if (other.DateTo != 0L)
+        this.DateTo = other.DateTo;
+      if (other.Offset != 0)
+        this.Offset = other.Offset;
+      this._unknownFields = UnknownFieldSet.MergeFrom(this._unknownFields, other._unknownFields);
+    }
+
+    [DebuggerNonUserCode]
+    public void MergeFrom(CodedInputStream input)
+    {
+      uint num;
+      while ((num = input.ReadTag()) != 0U)
+      {
+        switch (num)
+        {
+          case 10:
+            this.SymbolId = input.ReadString();
+            continue;
+          case 16:
+            this.DateFrom = input.ReadInt64();
+            continue;
+          case 24:
+            this.DateTo = input.ReadInt64();
+            continue;
+          case 32:
+            this.Offset = input.ReadInt32();
+            continue;
+          default:
+            this._unknownFields = UnknownFieldSet.MergeFieldFrom(this._unknownFields, input);
+            continue;
+        }
+      }
+    }
+  }
+}

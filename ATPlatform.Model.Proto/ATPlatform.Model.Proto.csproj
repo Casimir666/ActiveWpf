@@ -1,0 +1,11 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ATPlatform.Common\ATPlatform.Common.csproj" />
+    <ProjectReference Include="..\ATPlatform.Messages\ATPlatform.Messages.csproj" />
+    <ProjectReference Include="..\ATPlatform.Model.Contracts\ATPlatform.Model.Contracts.csproj" />
+    <ProjectReference Include="..\ATPlatform.Model\ATPlatform.Model.csproj" />
+  </ItemGroup>
+</Project>
