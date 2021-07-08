@@ -35,6 +35,8 @@ namespace ActivWpf
         {
             Ioc.Default.ConfigureServices(new ServiceCollection()
                 .AddSingleton<IActivTraderAPI>(CreateActivTradeClient())
+                .AddSingleton<IDispatcherService, DispatcherService>()
+                .AddSingleton<ViewModelFactory>()
                 .AddSingleton<ActiveViewModel>()
                 .AddSingleton<MainWindowsViewModel>()
                 .AddSingleton<Calculator>()

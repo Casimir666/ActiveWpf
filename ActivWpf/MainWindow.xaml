@@ -39,10 +39,10 @@
                                     <ColumnDefinition />
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="{Binding Symbol}" />
-                                <TextBlock Grid.Column="1" Text="{Binding OpenPrice, StringFormat={}{0:0.00}}" />
+                                <TextBlock Grid.Column="1" Text="{Binding OpenPrice}" />
                                 <TextBlock Grid.Column="2" Text="{Binding Profit, StringFormat={}{0:0.00}}" />
                                 <TextBlock Grid.Column="3" Text="{Binding Lots}" />
-                                <Button Grid.Column="4" Content="Close" Command="{Binding PartialCloseCommand}" />
+                                <Button Grid.Column="4" Content="Close" Command="{Binding CloseCommand}" />
                             </Grid>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
@@ -61,9 +61,9 @@
                                     <ColumnDefinition />
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="{Binding Symbol}" />
-                                <TextBlock Grid.Column="1" Text="{Binding OpenPrice, StringFormat={}{0:0.00}}" />
-                                <TextBlock Grid.Column="2" Text="{Binding StopLoss, StringFormat={}{0:0.00}}" />
-                                <TextBlock Grid.Column="3" Text="{Binding TakeProfit, StringFormat={}{0:0.00}}" />
+                                <TextBlock Grid.Column="1" Text="{Binding OpenPrice}" />
+                                <TextBlock Grid.Column="2" Text="{Binding StopLoss}" />
+                                <TextBlock Grid.Column="3" Text="{Binding TakeProfit}" />
                                 <Button Grid.Column="4" Content="Cancel" Command="{Binding CancelCommand}" />
                             </Grid>
                         </DataTemplate>

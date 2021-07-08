@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using ActivTrades.ActivTrader.API;
+using ActivWpf.Service;
 using ActivWpf.Utils;
 using ATPlatform.Model.Entities;
 using ATPlatform.Model.Enums.Order;
@@ -11,8 +12,9 @@ using Microsoft.Toolkit.Mvvm.Input;
 
 namespace ActivWpf.ViewModels
 {
-    public class OrderViewModel : ObservableObject
+    class OrderViewModel : ObservableObject
     {
+        private readonly IDispatcherService _dispatcherService;
         private readonly IActivTraderAPI _api;
         private readonly Symbol _symbol;
         private Order _order;
@@ -52,10 +54,34 @@ namespace ActivWpf.ViewModels
 
         public ICommand CancelCommand => new AsyncRelayCommand(OnCancelAsync);
         public ICommand PartialCloseCommand => new AsyncRelayCommand(OnPartialCloseAsync);
+        public ICommand CloseCommand => new AsyncRelayCommand(OnCloseAsync);
 
         private async Task OnCancelAsync()
         {
-            await CancelAsync();
+            var message = $"Do you want to cancel {_order.OrderType} {_order.Symbol}?";
+            if (MessageBox.Show(message, null, MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+            {
+                await _api.CancelPendingOrderAsync(new OrderRequest {AccountId = _order.AccountId, OrderId = _order.Id});
+            }
+        }
+
+
+        private async Task OnCloseAsync()
+        {
+            try
+            {
+                await _api.CloseMarketOrderAsync(new OrderRequest
+                {
+                    Symbol = _order.Symbol,
+                    AccountId = _order.AccountId,
+                    OrderId = _order.Id,
+                    Lots = 0.01
+                });
+            }
+            catch (Exception ex)
+            {
+
+            }
         }
 
         private async Task OnPartialCloseAsync()
@@ -70,8 +96,9 @@ namespace ActivWpf.ViewModels
             }
         }
 
-        public OrderViewModel(IActivTraderAPI api, Order order)
+        public OrderViewModel(IDispatcherService dispatcherService, IActivTraderAPI api, Order order)
         {
+            _dispatcherService = dispatcherService;
             _api = api;
             _order = order;
             _symbol = api.GetSymbol(order.Symbol);
@@ -80,15 +107,10 @@ namespace ActivWpf.ViewModels
         public void UpdateTick(Tick tick)
         {
             _lastTick = tick;
-            Application.Current?.Dispatcher?.Invoke(() =>
+            _dispatcherService.Invoke(() =>
             {
                 OnPropertyChanged(nameof(Profit));
             });
-        }
-
-        public async Task<Order> CancelAsync()
-        {
-            return await _api.CancelPendingOrderAsync(new OrderRequest { AccountId = _order.AccountId, OrderId = _order.Id });
         }
 
         public async Task PartialClose(double lots)

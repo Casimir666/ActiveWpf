@@ -325,6 +325,13 @@ namespace ActivTrades.ActivTrader.API.Trade
       return symbolTradingData.SymbolTradeSettings.Clone();
     }
 
+    public SymbolTradingData GetSymbolTradingData(string symbol)
+    {
+        if (_symbolTradingData.TryGetValue(symbol, out SymbolTradingData symbolTradingData))
+            return symbolTradingData;
+        return null;
+    }
+
     public IReadOnlyCollection<TradingSession> GetSymbolTradingSessions(
       string symbol)
     {
@@ -654,6 +661,8 @@ namespace ActivTrades.ActivTrader.API.Trade
       await tradeClient.LoadSymbolsByTradeSetAsync();
       await tradeClient.LoadSymbolsTradingSessionsAsync();
       await tradeClient.LoadOpenedOrdersAsync();
+      await tradeClient.LoadLastPricesAsync();
+      await tradeClient.LoadMarkupSettingsAsync();
     }
 
     private async Task LoadServerStatusAsync()

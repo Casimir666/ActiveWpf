@@ -1,6 +1,6 @@
 ﻿namespace ActivWpf.ViewModels
 {
-    public class MainWindowsViewModel
+    class MainWindowsViewModel
     {
         public ActiveViewModel ActiveViewModel { get; }
 

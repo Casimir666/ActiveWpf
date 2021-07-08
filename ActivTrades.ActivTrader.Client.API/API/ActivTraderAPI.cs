@@ -169,6 +169,11 @@ namespace ActivTrades.ActivTrader.API
       return this._tradeChannel.GetSymbol(symbol);
     }
 
+    public SymbolTradingData GetSymbolTradingData(string symbol)
+    {
+        return _tradeChannel.GetSymbolTradingData(symbol);
+    }
+
     public bool IsInSessionAndNotExpired(string symbol)
     {
       this.ValidateChannelState();

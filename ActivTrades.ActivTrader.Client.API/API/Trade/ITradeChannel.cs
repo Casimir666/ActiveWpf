@@ -39,6 +39,8 @@ namespace ActivTrades.ActivTrader.API.Trade
 
     Symbol GetSymbol(string symbol);
 
+    SymbolTradingData GetSymbolTradingData(string symbol);
+
     bool IsInSessionAndNotExpired(string symbol);
 
     IReadOnlyCollection<TradingSession> GetSymbolTradingSessions(

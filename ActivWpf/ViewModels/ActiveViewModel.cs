@@ -8,15 +8,17 @@ using ActivTrades.ActivTrader.API;
 using ActivTrades.ActivTrader.API.Models;
 using ActivTrades.ActivTrader.Connection.Models;
 using ActivWpf.Service;
+using ATPlatform.Model.Entities;
 using ATPlatform.Model.Enums.Order;
 using Microsoft.Toolkit.Mvvm.ComponentModel;
 using Microsoft.Toolkit.Mvvm.DependencyInjection;
 
 namespace ActivWpf.ViewModels
 {
-    public class ActiveViewModel : ObservableObject
+    class ActiveViewModel : ObservableObject
     {
         private readonly IActivTraderAPI _api;
+        private readonly IDispatcherService _dispatcherService;
 
         public ObservableCollection<SymbolViewModel> Symbols { get; }
 
@@ -24,9 +26,10 @@ namespace ActivWpf.ViewModels
 
         public ObservableCollection<OrderViewModel> Positions { get; }
 
-        public ActiveViewModel(IActivTraderAPI api)
+        public ActiveViewModel(IActivTraderAPI api, IDispatcherService dispatcherService)
         {
             _api = api;
+            _dispatcherService = dispatcherService;
 
             Symbols = new ObservableCollection<SymbolViewModel>();
             Orders = new ObservableCollection<OrderViewModel>();
@@ -51,7 +54,8 @@ namespace ActivWpf.ViewModels
                 /*var newOrder = await _api.OpenOrderAsync(new OrderRequest
                 {
                     Symbol = "AUDUSD",
-                    OrderType = OrderType.Buy,
+                    OrderType = OrderType.BuyLimit,
+                    Price = 0.7,
                     Lots = 0.05, 
                     AccountId = _api.GetAccount().Id
                 });*/
@@ -126,12 +130,24 @@ namespace ActivWpf.ViewModels
                 case OrderState.Closed:
                 case OrderState.Deleted:
                 case OrderState.Canceled:
+                    _dispatcherService.Invoke(() =>
+                    {
+                        RemoveIfExists(e.Order, Positions);
+                        RemoveIfExists(e.Order, Orders);
+                    });
                     break;
 
                 case OrderState.Rejected:
                     // TODO
                     break;
             }
+        }
+
+        private void RemoveIfExists(Order order, ObservableCollection<OrderViewModel> collection)
+        {
+            var existingItem = collection.SingleOrDefault(c => c.Id == order.Id);
+            if (existingItem != null)
+                collection.Remove(existingItem);
         }
 
         private void OnMarketDataUpdate(object sender, MarketDataUpdateEventArgs e)
