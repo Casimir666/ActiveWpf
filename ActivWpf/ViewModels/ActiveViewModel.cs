@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Threading;
 using ActivTrades.ActivTrader.API;
 using ActivTrades.ActivTrader.API.Models;
 using ActivTrades.ActivTrader.Connection.Models;
@@ -19,6 +20,9 @@ namespace ActivWpf.ViewModels
     {
         private readonly IActivTraderAPI _api;
         private readonly IDispatcherService _dispatcherService;
+        private readonly ViewModelFactory _viewModelFactory;
+        private readonly List<string> _manualMarketUpdate = new();
+        private readonly DispatcherTimer _manualMarketTimer;
 
         public ObservableCollection<SymbolViewModel> Symbols { get; }
 
@@ -26,14 +30,25 @@ namespace ActivWpf.ViewModels
 
         public ObservableCollection<OrderViewModel> Positions { get; }
 
-        public ActiveViewModel(IActivTraderAPI api, IDispatcherService dispatcherService)
+        public ActiveViewModel(
+            IActivTraderAPI api, 
+            IDispatcherService dispatcherService,
+            ViewModelFactory viewModelFactory)
         {
             _api = api;
             _dispatcherService = dispatcherService;
+            _viewModelFactory = viewModelFactory;
 
             Symbols = new ObservableCollection<SymbolViewModel>();
             Orders = new ObservableCollection<OrderViewModel>();
             Positions = new ObservableCollection<OrderViewModel>();
+
+            _manualMarketTimer = new DispatcherTimer(DispatcherPriority.Normal, Application.Current.Dispatcher)
+            {
+                Interval = TimeSpan.FromSeconds(1),
+                IsEnabled = false
+            };
+            _manualMarketTimer.Tick += OnManualMarketTimer;
         }
 
         public async Task ConnectAsync(IEnumerable<string> symbolNames = null)
@@ -44,12 +59,10 @@ namespace ActivWpf.ViewModels
             _api.OrderNotification += OnOrderNotification;
             _api.StateChanged += OnStateChanged;
 
-
             try
             {
                 await _api.ConnectAsync();
                 var calc = Ioc.Default.GetService<Calculator>();
-                var oo = calc.EstimateProfit("EURUSD", OrderType.Sell, 0.4, 4.7108, 4.0827, 4.9043);
 
                 /*var newOrder = await _api.OpenOrderAsync(new OrderRequest
                 {
@@ -66,15 +79,17 @@ namespace ActivWpf.ViewModels
                     {
                         try
                         {
-                            Application.Current.Dispatcher.Invoke(() => Symbols.Add(new SymbolViewModel(_api.GetSymbol(symbol))));
+                            Application.Current.Dispatcher.Invoke(() => Symbols.Add(_viewModelFactory.CreateSymbolViewModel(_api.GetSymbol(symbol))));
                             _api.Subscribe(symbol);
                         }
                         catch (Exception ex)
                         {
                             // Symbol not found!
+                            _manualMarketUpdate.Add(symbol);
                         }
                     }
                 }
+                _manualMarketTimer.Start();
 
                 foreach (var order in _api.GetOrders())
                 {
@@ -83,11 +98,11 @@ namespace ActivWpf.ViewModels
                         switch (order.State)
                         {
                             case OrderState.Pending:
-                                Positions.Add(new OrderViewModel(_api, order));
+                                Positions.Add(_viewModelFactory.CreateOrderViewModel(_api, order));
                                 break;
                             case OrderState.Open:
                             case OrderState.Closed:
-                                Orders.Add(new OrderViewModel(_api, order));
+                                Orders.Add(_viewModelFactory.CreateOrderViewModel(_api, order));
                                 break;
                         }
                     });
@@ -96,6 +111,17 @@ namespace ActivWpf.ViewModels
             catch (Exception ex)
             {
 
+            }
+        }
+
+        private async void OnManualMarketTimer(object? sender, EventArgs e)
+        {
+            await _api.RefreshPricesAsync();
+
+            foreach (var symbol in _manualMarketUpdate)
+            {
+                var tradingData = _api.GetSymbolTradingData(symbol);
+                UpdateSymbolTick(tradingData.LastFilteredTicks.Close);
             }
         }
 
@@ -108,7 +134,7 @@ namespace ActivWpf.ViewModels
             switch (e.Order.State)
             {
                 case OrderState.Pending:
-                    Positions.Add(new OrderViewModel(_api, e.Order));
+                    Positions.Add(_viewModelFactory.CreateOrderViewModel(_api, e.Order));
                     break;
                 case OrderState.Open:
                     var existingPosition = Positions.SingleOrDefault(p => p.Id == e.Order.Id);
@@ -152,12 +178,7 @@ namespace ActivWpf.ViewModels
 
         private void OnMarketDataUpdate(object sender, MarketDataUpdateEventArgs e)
         {
-            var symbolViewModel = Symbols.FirstOrDefault(s => s.Id == e.Tick.SymbolId);
-            symbolViewModel?.UpdateTick(e.Tick);
-            foreach (var orderViewModel in Orders.Where(o => o.Symbol == e.Tick.SymbolId))
-            {
-                orderViewModel.UpdateTick(e.Tick);
-            }
+            UpdateSymbolTick(e.Tick);
         }
 
         private void OnMarketDataEventNotification(object sender, MarketDataEventNotificationEventArgs e)
@@ -166,6 +187,16 @@ namespace ActivWpf.ViewModels
 
         private void OnClientMessageNotification(object sender, ClientMessageNotificationEventArgs e)
         {
+        }
+
+        private void UpdateSymbolTick(Tick tick)
+        {
+            var symbolViewModel = Symbols.FirstOrDefault(s => s.Id == tick.SymbolId);
+            symbolViewModel?.UpdateTick(tick);
+            foreach (var orderViewModel in Orders.Where(o => o.Symbol == tick.SymbolId))
+            {
+                orderViewModel.UpdateTick(tick);
+            }
         }
     }
 }

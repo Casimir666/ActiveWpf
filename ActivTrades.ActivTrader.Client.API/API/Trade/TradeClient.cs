@@ -332,6 +332,11 @@ namespace ActivTrades.ActivTrader.API.Trade
         return null;
     }
 
+    public async Task RefreshPricesAsync()
+    {
+        await LoadLastPricesAsync();
+    }
+
     public IReadOnlyCollection<TradingSession> GetSymbolTradingSessions(
       string symbol)
     {

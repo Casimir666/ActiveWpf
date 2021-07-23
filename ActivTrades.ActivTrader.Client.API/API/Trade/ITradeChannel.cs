@@ -41,6 +41,8 @@ namespace ActivTrades.ActivTrader.API.Trade
 
     SymbolTradingData GetSymbolTradingData(string symbol);
 
+    Task RefreshPricesAsync();
+
     bool IsInSessionAndNotExpired(string symbol);
 
     IReadOnlyCollection<TradingSession> GetSymbolTradingSessions(
