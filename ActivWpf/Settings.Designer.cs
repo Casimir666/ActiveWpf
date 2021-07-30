@@ -44,6 +44,7 @@ namespace ActivWpf {
   <string>UsaTec</string>
   <string>GOLD</string>
   <string>SILVER</string>
+  <string>CopperSep21</string>
 </ArrayOfString>")]
         public global::System.Collections.Specialized.StringCollection Symbols {
             get {

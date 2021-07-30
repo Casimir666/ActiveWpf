@@ -7,6 +7,10 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
         <TabControl>
             <TabItem Header="Symbols" DataContext="{Binding ActiveViewModel}">
                 <ItemsControl ItemsSource="{Binding Symbols}">
@@ -27,26 +31,21 @@
                 </ItemsControl>
             </TabItem>
             <TabItem Header="Orders" DataContext="{Binding ActiveViewModel}">
-                <ItemsControl ItemsSource="{Binding Orders}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate DataType="{x:Type viewModels:OrderViewModel}">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition />
-                                    <ColumnDefinition />
-                                    <ColumnDefinition />
-                                    <ColumnDefinition />
-                                    <ColumnDefinition />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="{Binding Symbol}" />
-                                <TextBlock Grid.Column="1" Text="{Binding OpenPrice}" />
-                                <TextBlock Grid.Column="2" Text="{Binding Profit, StringFormat={}{0:0.00}}" />
-                                <TextBlock Grid.Column="3" Text="{Binding Lots}" />
-                                <Button Grid.Column="4" Content="Close" Command="{Binding CloseCommand}" />
-                            </Grid>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                <ListView ItemsSource="{Binding Orders}">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="Id" Width="80" DisplayMemberBinding="{Binding Id}" />
+                            <GridViewColumn Header="Time" Width="100" DisplayMemberBinding="{Binding OpenTime}" />
+                            <GridViewColumn Header="Type" Width="80" DisplayMemberBinding="{Binding OrderType}" />
+                            <GridViewColumn Header="Lots" Width="80" DisplayMemberBinding="{Binding Lots}" />
+                            <GridViewColumn Header="Symbol" Width="70" DisplayMemberBinding="{Binding Symbol}" />
+                            <GridViewColumn Header="Price" Width="90" DisplayMemberBinding="{Binding OpenPrice}" />
+                            <GridViewColumn Header="S/S" Width="90" DisplayMemberBinding="{Binding StopLoss}" />
+                            <GridViewColumn Header="T/P" Width="90" DisplayMemberBinding="{Binding TakeProfit}" />
+                            <GridViewColumn Header="Profit" Width="90" DisplayMemberBinding="{Binding Profit, StringFormat={}{0:0.00}}" />
+                        </GridView>
+                    </ListView.View>
+                </ListView>
             </TabItem>
             <TabItem Header="Position" DataContext="{Binding ActiveViewModel}">
                 <ItemsControl ItemsSource="{Binding Positions}">
@@ -70,6 +69,28 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
             </TabItem>
+            <TabItem Header="History" DataContext="{Binding ActiveViewModel}">
+                <ListView ItemsSource="{Binding History}">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="Id" Width="80" DisplayMemberBinding="{Binding Id}" />
+                            <GridViewColumn Header="Time" Width="100" DisplayMemberBinding="{Binding OpenTime}" />
+                            <GridViewColumn Header="Type" Width="80" DisplayMemberBinding="{Binding OrderType}" />
+                            <GridViewColumn Header="Lots" Width="80" DisplayMemberBinding="{Binding Lots}" />
+                            <GridViewColumn Header="Symbol" Width="70" DisplayMemberBinding="{Binding Symbol}" />
+                            <GridViewColumn Header="Price" Width="90" DisplayMemberBinding="{Binding OpenPrice}" />
+                            <GridViewColumn Header="S/S" Width="90" DisplayMemberBinding="{Binding StopLoss}" />
+                            <GridViewColumn Header="T/P" Width="90" DisplayMemberBinding="{Binding TakeProfit}" />
+                            <GridViewColumn Header="Profit" Width="90" DisplayMemberBinding="{Binding Profit, StringFormat={}{0:0.00}}" />
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+            </TabItem>
         </TabControl>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="3">
+            <Button Content="Sell..." Command="{Binding Path=ActiveViewModel.SellCommand}" />
+            <Button Content="Buy..." Command="{Binding Path=ActiveViewModel.BuyCommand}" Margin="10,0" />
+        </StackPanel>
     </Grid>
 </Window>

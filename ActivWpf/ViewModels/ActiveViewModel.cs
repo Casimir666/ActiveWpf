@@ -4,15 +4,18 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Threading;
 using ActivTrades.ActivTrader.API;
 using ActivTrades.ActivTrader.API.Models;
 using ActivTrades.ActivTrader.Connection.Models;
 using ActivWpf.Service;
+using ActivWpf.Utils;
 using ATPlatform.Model.Entities;
 using ATPlatform.Model.Enums.Order;
 using Microsoft.Toolkit.Mvvm.ComponentModel;
 using Microsoft.Toolkit.Mvvm.DependencyInjection;
+using Microsoft.Toolkit.Mvvm.Input;
 
 namespace ActivWpf.ViewModels
 {
@@ -30,6 +33,8 @@ namespace ActivWpf.ViewModels
 
         public ObservableCollection<OrderViewModel> Positions { get; }
 
+        public ObservableCollection<OrderViewModel> History { get; }
+
         public ActiveViewModel(
             IActivTraderAPI api, 
             IDispatcherService dispatcherService,
@@ -42,6 +47,7 @@ namespace ActivWpf.ViewModels
             Symbols = new ObservableCollection<SymbolViewModel>();
             Orders = new ObservableCollection<OrderViewModel>();
             Positions = new ObservableCollection<OrderViewModel>();
+            History = new ObservableCollection<OrderViewModel>();
 
             _manualMarketTimer = new DispatcherTimer(DispatcherPriority.Normal, Application.Current.Dispatcher)
             {
@@ -62,7 +68,8 @@ namespace ActivWpf.ViewModels
             try
             {
                 await _api.ConnectAsync();
-                var calc = Ioc.Default.GetService<Calculator>();
+                var utcNow = DateTime.UtcNow;
+                var closedOrders = await _api.GetClosedOrdersAndBalanceOperationsAsync(utcNow - TimeSpan.FromDays(7), utcNow);
 
                 /*var newOrder = await _api.OpenOrderAsync(new OrderRequest
                 {
@@ -73,27 +80,28 @@ namespace ActivWpf.ViewModels
                     AccountId = _api.GetAccount().Id
                 });*/
 
-                if (symbolNames != null)
+                Application.Current.Dispatcher.Invoke(() =>
                 {
-                    foreach (var symbol in symbolNames)
+                    if (symbolNames != null)
                     {
-                        try
+                        foreach (var symbolName in symbolNames)
                         {
-                            Application.Current.Dispatcher.Invoke(() => Symbols.Add(_viewModelFactory.CreateSymbolViewModel(_api.GetSymbol(symbol))));
-                            _api.Subscribe(symbol);
-                        }
-                        catch (Exception ex)
-                        {
-                            // Symbol not found!
-                            _manualMarketUpdate.Add(symbol);
+                            try
+                            {
+                                Symbols.Add(_viewModelFactory.CreateSymbolViewModel(_api.GetSymbol(symbolName)));
+                                _api.Subscribe(symbolName);
+                            }
+                            catch (Exception ex)
+                            {
+                                // Symbol not found!
+                                _manualMarketUpdate.Add(symbolName);
+                            }
                         }
                     }
-                }
-                _manualMarketTimer.Start();
 
-                foreach (var order in _api.GetOrders())
-                {
-                    Application.Current.Dispatcher.Invoke(() =>
+                    _manualMarketTimer.Start();
+
+                    foreach (var order in _api.GetOrders())
                     {
                         switch (order.State)
                         {
@@ -105,23 +113,78 @@ namespace ActivWpf.ViewModels
                                 Orders.Add(_viewModelFactory.CreateOrderViewModel(_api, order));
                                 break;
                         }
-                    });
-                }
+                    }
+
+                    foreach (var order in closedOrders.ClosedOrders.OrderByDescending(o => o.CloseTime))
+                    {
+                        History.Add(_viewModelFactory.CreateOrderViewModel(_api, order));
+                    }
+                });
             }
             catch (Exception ex)
             {
 
             }
+
+
+            /*
+            var symbol = _api.GetSymbol("EURUSD");
+            var orderType = OrderType.Sell;
+            var lots = 0.2;
+            
+            var fees = 0.0;
+            var sellOrder = default(Order);
+            var buyOrder = default(Order);
+            var tradingData = _api.GetSymbolTradingData(symbol.Id);
+//            await _api.RefreshPricesAsync();
+            while (fees < 50.0)
+            {
+                try
+                {
+                    if (sellOrder == null)
+                    {
+                        sellOrder = await OpenOrderAsync(symbol.Id, OrderType.Sell, lots);
+                        fees += (tradingData.LastFilteredTicks.Close.Ask - tradingData.LastFilteredTicks.Close.Bid) * sellOrder.Lots * symbol.ContractSize * sellOrder.ProfitConversionRate;
+                        System.Diagnostics.Debug.WriteLine($"Total fees : {fees}");
+                    }
+
+                    if (buyOrder == null)
+                    {
+                        buyOrder = await OpenOrderAsync(symbol.Id, OrderType.Buy, lots);
+                        fees += (tradingData.LastFilteredTicks.Close.Ask - tradingData.LastFilteredTicks.Close.Bid) * buyOrder.Lots * symbol.ContractSize * buyOrder.ProfitConversionRate;
+                        System.Diagnostics.Debug.WriteLine($"Total fees : {fees}");
+                    }
+
+                    while (sellOrder != null && buyOrder != null && sellOrder.State != OrderState.Closed && buyOrder.State != OrderState.Closed)
+                    {
+                        await Task.Delay(50);
+                        if (sellOrder != null) sellOrder = _api.GetOrder(symbol.Id, sellOrder.Id);
+                        if (buyOrder != null) buyOrder = _api.GetOrder(symbol.Id, buyOrder.Id);
+                    }
+                }
+                catch (Exception ex)
+                {
+
+                }
+            }*/
+
         }
 
         private async void OnManualMarketTimer(object? sender, EventArgs e)
         {
-            await _api.RefreshPricesAsync();
-
-            foreach (var symbol in _manualMarketUpdate)
+            try
             {
-                var tradingData = _api.GetSymbolTradingData(symbol);
-                UpdateSymbolTick(tradingData.LastFilteredTicks.Close);
+                await _api.RefreshPricesAsync();
+
+                foreach (var symbol in _manualMarketUpdate)
+                {
+                    var tradingData = _api.GetSymbolTradingData(symbol);
+                    UpdateSymbolTick(tradingData.LastFilteredTicks.Close);
+                }
+            }
+            catch (Exception ex)
+            {
+                // TODO...
             }
         }
 
@@ -131,42 +194,45 @@ namespace ActivWpf.ViewModels
 
         private void OnOrderNotification(object sender, OrderNotificationEventArgs e)
         {
-            switch (e.Order.State)
+            _dispatcherService.Invoke(() =>
             {
-                case OrderState.Pending:
-                    Positions.Add(_viewModelFactory.CreateOrderViewModel(_api, e.Order));
-                    break;
-                case OrderState.Open:
-                    var existingPosition = Positions.SingleOrDefault(p => p.Id == e.Order.Id);
-                    if (existingPosition != null)
-                    {
-                        Positions.Remove(existingPosition);
-                    }
-                    else
-                    {
+                switch (e.Order.State)
+                {
+                    case OrderState.Pending:
+                        if (!Positions.Any(o => o.Id == e.Order.Id))
+                            Positions.Add(_viewModelFactory.CreateOrderViewModel(_api, e.Order));
+                        break;
+                    case OrderState.Open:
+                        var existingPosition = Positions.SingleOrDefault(p => p.Id == e.Order.Id);
+                        if (existingPosition != null)
+                        {
+                            Positions.Remove(existingPosition);
+                        }
                         var existingOrder = Orders.SingleOrDefault(p => p.Id == e.Order.Id);
                         if (existingOrder != null)
-                        {
                             existingOrder.Update(e.Order);
-                        }
-                    }
+                        else
+                            Orders.Add(_viewModelFactory.CreateOrderViewModel(_api, e.Order));
 
-                    break;
+                        break;
 
-                case OrderState.Closed:
-                case OrderState.Deleted:
-                case OrderState.Canceled:
-                    _dispatcherService.Invoke(() =>
-                    {
+                    case OrderState.Closed:
+                    case OrderState.Deleted:
+                    case OrderState.Canceled:
                         RemoveIfExists(e.Order, Positions);
                         RemoveIfExists(e.Order, Orders);
-                    });
-                    break;
+                        var historyPosition = History.SingleOrDefault(p => p.Id == e.Order.Id);
+                        if (historyPosition != null)
+                            historyPosition.Update(e.Order);
+                        else
+                            History.Insert(0, _viewModelFactory.CreateOrderViewModel(_api, e.Order));
+                        break;
 
-                case OrderState.Rejected:
-                    // TODO
-                    break;
-            }
+                    case OrderState.Rejected:
+                        // TODO
+                        break;
+                }
+            });
         }
 
         private void RemoveIfExists(Order order, ObservableCollection<OrderViewModel> collection)
@@ -196,6 +262,58 @@ namespace ActivWpf.ViewModels
             foreach (var orderViewModel in Orders.Where(o => o.Symbol == tick.SymbolId))
             {
                 orderViewModel.UpdateTick(tick);
+            }
+        }
+
+
+        private const string _testSymbol = "AUDCAD";
+        private const double _testLots = 0.2;
+        private const double _gain = 0.00001;
+
+        private async Task<Order> OpenOrderAsync(string symbol, OrderType orderType, double lots, double price = 0.0)
+        {
+            var order = await _api.OpenOrderAsync(new OrderRequest
+            {
+                Symbol = symbol,
+                OrderType = orderType,
+                Lots = lots,
+                Price = price,
+                AccountId = _api.GetAccount().Id
+            });
+
+            var takeProfit = order.OpenPrice + (orderType == OrderType.Buy ? 1 : -1) * _gain;
+            
+            order = await _api.ModifyOrderAsync(new OrderRequest
+            {
+                OrderId = order.Id,
+                Symbol = symbol,
+                OrderType = orderType,
+                Lots = lots,
+                Price = price,
+                TakeProfit = takeProfit, // + (tradingData.LastFilteredTicks.Close.Ask - tradingData.LastFilteredTicks.Close.Bid) * (orderType.IsSellOrder() ? -1 : 1),
+                AccountId = _api.GetAccount().Id
+            });
+
+            return order;
+        }
+
+        public ICommand SellCommand => new AsyncRelayCommand(OnSellAsync);
+
+        private async Task OnSellAsync()
+        {
+            if (_api.IsConnected && Orders.Union(Positions).All(o => o.Symbol != _testSymbol || o.OrderType != OrderType.Sell))
+            {
+                await OpenOrderAsync(_testSymbol, OrderType.Sell, _testLots);
+            }
+        }
+
+        public ICommand BuyCommand => new AsyncRelayCommand(OnBuyAsync);
+
+        private async Task OnBuyAsync()
+        {
+            if (_api.IsConnected && Orders.Union(Positions).All(o => o.Symbol != _testSymbol || o.OrderType != OrderType.Buy))
+            {
+                await OpenOrderAsync(_testSymbol, OrderType.Buy, _testLots);
             }
         }
     }

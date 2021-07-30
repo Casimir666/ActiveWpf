@@ -21,6 +21,8 @@ namespace ActivWpf.ViewModels
         private Tick _lastTick;
 
         public long Id => _order.Id;
+        public DateTime OpenTime => _order.OpenTime;
+        public OrderType OrderType => _order.OrderType;
         public string Symbol => _order.Symbol;
         public double? OpenPrice => _order?.OpenPrice;
         public double? StopLoss => _order?.StopLoss;
@@ -31,18 +33,18 @@ namespace ActivWpf.ViewModels
         {
             get
             {
-                if ((_lastTick != null) && (_order.State == OrderState.Open || _order.State == OrderState.Closed))
+                if ((_lastTick != null && _order.State == OrderState.Open) || _order.State == OrderState.Closed)
                 {
                     switch (_order.OrderType)
                     {
                         case OrderType.Buy:
                         case OrderType.BuyLimit:
                         case OrderType.BuyStop:
-                            return (_lastTick.Bid - _order.OpenPrice) * _order.Lots * _symbol.ContractSize * _order.ProfitConversionRate;
+                            return ((_order.State == OrderState.Closed ? _order.ClosePrice : _lastTick?.Bid) - _order.OpenPrice) * _order.Lots * _symbol.ContractSize * _order.ProfitConversionRate;
                         case OrderType.Sell:
                         case OrderType.SellLimit:
                         case OrderType.SellStop:
-                            return (_order.OpenPrice - _lastTick.Ask) * _order.Lots * _symbol.ContractSize * _order.ProfitConversionRate;
+                            return (_order.OpenPrice - (_order.State == OrderState.Closed ? _order.ClosePrice :_lastTick?.Ask)) * _order.Lots * _symbol.ContractSize * _order.ProfitConversionRate;
                         default:
                             throw new ArgumentOutOfRangeException();
                     }
