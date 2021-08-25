@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
@@ -68,6 +69,7 @@ namespace ActivWpf.ViewModels
             try
             {
                 await _api.ConnectAsync();
+                await EstimateFees();
                 var utcNow = DateTime.UtcNow;
                 var closedOrders = await _api.GetClosedOrdersAndBalanceOperationsAsync(utcNow - TimeSpan.FromDays(7), utcNow);
 
@@ -169,6 +171,7 @@ namespace ActivWpf.ViewModels
             }*/
 
         }
+
 
         private async void OnManualMarketTimer(object? sender, EventArgs e)
         {
@@ -316,5 +319,50 @@ namespace ActivWpf.ViewModels
                 await OpenOrderAsync(_testSymbol, OrderType.Buy, _testLots);
             }
         }
+
+
+        private async Task EstimateFees()
+        {
+            var closedOrders = await _api.GetClosedOrdersAndBalanceOperationsAsync(new DateTime(2021, 6, 28), DateTime.UtcNow);
+
+            var fees = 0.0;
+            var historyOrder = closedOrders.ClosedOrders.Where(o => o.State == OrderState.Closed).OrderBy(o => o.CloseTime).ToList();
+            await using var writer = File.CreateText(@"C:\Data\Documents\fees.csv");
+            await writer.WriteLineAsync("{order.Id};{order.CloseTime};{order.OrderType};{order.Symbol};{order.Lots};{order.OpenPrice};{order.ClosePrice};{spread};{symbol.ContractSize};{symbol.ContractSizeDenominator};{order.Profit};{order.ProfitConversionRate}");
+            foreach (var order in historyOrder)
+            {
+                var symbol = _api.GetSymbol(order.Symbol);
+                var tradingData = _api.GetSymbolTradingData(order.Symbol);
+                fees += order.Lots * order.ProfitConversionRate * symbol.ContractSize *
+                        (tradingData.LastFilteredTicks.Close.Ask - tradingData.LastFilteredTicks.Close.Bid);
+
+                var spread = tradingData.LastFilteredTicks.Close.Ask - tradingData.LastFilteredTicks.Close.Bid;
+                await writer.WriteLineAsync($"{order.Id};{order.CloseTime};{order.OrderType};{order.Symbol};{order.Lots};{order.OpenPrice};{order.ClosePrice};{spread};{symbol.ContractSize};{symbol.ContractSizeDenominator};{order.Profit};{order.ProfitConversionRate}");
+            }
+
+            await writer.FlushAsync();
+        }
+
+        private async Task CreateFeesSpredsheat()
+        {
+            var allSymbols = _api.GetSymbols();
+            var allGroups = _api.GetSymbolGroups();
+            await using var writer = File.CreateText(@"C:\Data\Documents\ActivTrades fees.csv");
+
+            foreach (var symbolGroupName in new[]{ "Majors", "Commodities", "Cash Indices", "Metals", "Spot Energy"})
+            {
+                var symbolGroup = allGroups.Single(g => g.Name == symbolGroupName && allSymbols.Any(s => s.GroupId == g.Id));
+                foreach (var symbol in allSymbols.Where(s => s.GroupId == symbolGroup.Id).OrderBy(s => s.Id))
+                {
+                    var a = _api.GetExchangeRateService().GetRate("EUR", symbol.ProfitCurrencyIsoCode);
+                    var b = _api.GetExchangeRateService().GetRate("EUR", symbol.BaseCurrencyIsoCode);
+                    var c = _api.GetExchangeRateService().GetRate(symbol.BaseCurrencyIsoCode, symbol.ProfitCurrencyIsoCode);
+                    var conversionRate = _api.GetExchangeRateService().GetRate(symbol.ProfitCurrencyIsoCode, symbol.BaseCurrencyIsoCode);
+                    var ss = _api.GetExchangeRateService().GetRate(symbol.BaseCurrencyIsoCode, "EUR");
+                }
+            }
+            
+        }
+
     }
 }

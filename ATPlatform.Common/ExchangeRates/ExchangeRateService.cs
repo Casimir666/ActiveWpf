@@ -52,8 +52,8 @@ namespace ATPlatform.Common.ExchangeRates
       if (rate1.Bid > 0.0)
         return rate1;
       ExchangeRate rate2 = this.rates[index1, this.intermediateCurrencyIndex];
-      ExchangeRate rate3 = this.rates[this.intermediateCurrencyIndex, index2];
-      return new ExchangeRate(rate2.Bid * rate3.Bid, rate2.Ask * rate3.Ask);
+      ExchangeRate rate3 = this.rates[index2, this.intermediateCurrencyIndex];
+      return new ExchangeRate(rate2.Bid / rate3.Bid, rate2.Ask / rate3.Ask);
     }
 
     private void InitializeRates(int currenciesCount)
